@@ -3,7 +3,13 @@ import { config } from "../config";
 import { tokenStorage } from "./tokenStorage";
 import { getSupabaseClient } from "./supabaseClient";
 
-function isSupabaseEnabled() {
+/**
+ * Determine whether Supabase auth is configured.
+ * We avoid logging secrets; callers can use this to branch or display diagnostics.
+ */
+// PUBLIC_INTERFACE
+export function isSupabaseEnabled() {
+  /** Returns true if the Supabase URL + anon key are present and a client is created. */
   return Boolean(config.supabaseUrl && config.supabaseAnonKey && getSupabaseClient());
 }
 
@@ -25,7 +31,6 @@ async function backendLogout() {
   return true;
 }
 
-// PUBLIC_INTERFACE
 export const authService = {
   /** True if Supabase Auth is configured in environment. */
   isSupabaseEnabled: () => isSupabaseEnabled(),

@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 
 import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { authService } from "./auth/authService";
+import { config } from "./config";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { Navbar } from "./components/Navbar";
 import { FullPageLoading } from "./components/States";
@@ -51,9 +53,32 @@ function AppRoutes() {
   );
 }
 
+/**
+ * Logs Supabase configuration status once at app startup.
+ * This is intentionally minimal and does not change app behavior.
+ */
+function useSupabaseStartupDiagnostics() {
+  useEffect(() => {
+    // Minimal runtime check requested: confirms the app is reading CRA env vars
+    // and the auth service will use Supabase (avoiding backend /auth/* fallback 404s).
+    const enabled = authService.isSupabaseEnabled();
+
+    // Avoid printing secrets; only log boolean presence.
+    console.info("[QuizMaster] Auth wiring:", {
+      supabaseEnabled: enabled,
+      hasSupabaseUrl: Boolean(config.supabaseUrl),
+      hasSupabaseAnonKey: Boolean(config.supabaseAnonKey),
+      // Helpful if emailRedirectTo is used during signup.
+      siteUrlConfigured: config.siteUrl || "",
+    });
+  }, []);
+}
+
 // PUBLIC_INTERFACE
 function App() {
   /** App entry: provides auth and routing, and renders top navigation. */
+  useSupabaseStartupDiagnostics();
+
   return (
     <AuthProvider>
       <BrowserRouter>
