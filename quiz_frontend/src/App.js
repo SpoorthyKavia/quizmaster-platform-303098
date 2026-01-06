@@ -1,48 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import "./App.css";
+
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { Navbar } from "./components/Navbar";
+import { FullPageLoading } from "./components/States";
+
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
+
+import { DashboardPage } from "./pages/DashboardPage";
+import { QuizzesPage } from "./pages/QuizzesPage";
+import { QuizTakePage } from "./pages/QuizTakePage";
+import { AdminQuestionsPage } from "./pages/AdminQuestionsPage";
+import { LeaderboardPage } from "./pages/LeaderboardPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+
+function AppRoutes() {
+  const { loading, isAuthenticated } = useAuth();
+
+  if (loading) return <FullPageLoading label="Loading app…" />;
+
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+      {/* Protected */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/quizzes" element={<QuizzesPage />} />
+        <Route path="/quizzes/:quizId/take" element={<QuizTakePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+
+      {/* Admin */}
+      <Route element={<ProtectedRoute requireAdmin />}>
+        <Route path="/questions" element={<AdminQuestionsPage />} />
+      </Route>
+
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+}
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
-
+  /** App entry: provides auth and routing, and renders top navigation. */
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="app-shell">
+          <Navbar />
+          <AppRoutes />
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
